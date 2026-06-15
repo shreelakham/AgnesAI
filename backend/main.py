@@ -1,11 +1,14 @@
-"""FastAPI backend for the Agnes Pitch Builder.
+"""FastAPI backend for AnyPitch — AnyMind Sales Intelligence.
 
 Pipeline endpoints:
-  POST /api/leads      ICP            -> candidate brands (Agnes text)
-  POST /api/research   brand          -> competitive analysis + pitch (Agnes text)
-  POST /api/image      pitch          -> concept image (Agnes image)
-  POST /api/deck       pitch [+image] -> downloadable .pptx
-  POST /api/dashboard  pitch          -> AnyMind revenue projections
+  POST /api/leads              ICP            -> candidate brands (Agnes text)
+  POST /api/research           brand          -> competitive analysis (Agnes text)
+  POST /api/image              pitch [+asset] -> concept image (Agnes image / img2img)
+  POST /api/video              pitch [+asset] -> concept video (Agnes video)
+  POST /api/deck               pitch [+image] -> downloadable .pptx
+  POST /api/forecast           pitch          -> customer revenue forecast
+  POST /api/roleplay           pitch+history  -> buyer reply (Agnes text, roleplay)
+  POST /api/roleplay/feedback  pitch+history  -> coaching (Agnes text)
 
 Run:  uvicorn main:app --reload --port 8000   (then open http://localhost:8000)
 """
@@ -17,16 +20,24 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from leads import generate_leads
-from pitch import build_pitch, generate_concept_image
+from pitch import (build_pitch, generate_concept_image, generate_concept_video)
 from deck import build_deck
 from revenue import build_dashboard
+from roleplay import buyer_reply, coach_feedback, suggest_pitch
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 GEN_DIR = os.path.join(BASE, "generated")
 FRONTEND = os.path.join(os.path.dirname(BASE), "frontend")
 os.makedirs(GEN_DIR, exist_ok=True)
 
-app = FastAPI(title="Agnes Pitch Builder")
+app = FastAPI(title="AnyPitch")
+
+
+def _need_pitch(payload: dict) -> dict:
+    pitch = payload.get("pitch") or {}
+    if not pitch.get("brand"):
+        raise HTTPException(400, "Provide a 'pitch' object.")
+    return pitch
 
 
 @app.post("/api/leads")
@@ -47,24 +58,37 @@ def api_research(payload: dict = Body(...)):
 
 @app.post("/api/image")
 def api_image(payload: dict = Body(...)):
-    pitch = payload.get("pitch") or {}
-    if not pitch.get("brand"):
-        raise HTTPException(400, "Provide a 'pitch' object.")
+    pitch = _need_pitch(payload)
+    init = payload.get("init_image")          # optional Data URI / URL (img2img)
     try:
-        png = generate_concept_image(pitch)
+        png, remote_url = generate_concept_image(pitch, init_image=init)
     except Exception as e:
         raise HTTPException(502, f"Image generation failed: {e}")
     name = f"img_{uuid.uuid4().hex[:10]}.png"
     with open(os.path.join(GEN_DIR, name), "wb") as f:
         f.write(png)
-    return {"image_url": f"/generated/{name}", "image_file": name}
+    # image_remote_url is Agnes' public URL -> feed it into image-to-video.
+    return {"image_url": f"/generated/{name}", "image_file": name,
+            "image_remote_url": remote_url}
+
+
+@app.post("/api/video")
+def api_video(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
+    init = payload.get("init_image")
+    try:
+        mp4 = generate_concept_video(pitch, init_image=init)
+    except Exception as e:
+        raise HTTPException(502, f"Video generation failed: {e}")
+    name = f"vid_{uuid.uuid4().hex[:10]}.mp4"
+    with open(os.path.join(GEN_DIR, name), "wb") as f:
+        f.write(mp4)
+    return {"video_url": f"/generated/{name}", "video_file": name}
 
 
 @app.post("/api/deck")
 def api_deck(payload: dict = Body(...)):
-    pitch = payload.get("pitch") or {}
-    if not pitch.get("brand"):
-        raise HTTPException(400, "Provide a 'pitch' object.")
+    pitch = _need_pitch(payload)
     image_bytes = None
     img_file = payload.get("image_file")
     if img_file:
@@ -79,20 +103,39 @@ def api_deck(payload: dict = Body(...)):
     return {"deck_url": f"/generated/{name}", "deck_file": name}
 
 
-@app.post("/api/dashboard")
-def api_dashboard(payload: dict = Body(...)):
-    pitch = payload.get("pitch") or {}
-    if not pitch.get("brand"):
-        raise HTTPException(400, "Provide a 'pitch' object.")
+@app.post("/api/forecast")
+def api_forecast(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
     a = payload.get("assumptions") or {}
     return build_dashboard(
         pitch,
-        start_gmv=float(a.get("start_gmv", 500_000)),
-        monthly_growth=float(a.get("monthly_growth", 0.04)),
+        start_revenue=float(a.get("start_revenue", 800_000)),
+        organic_growth=float(a.get("organic_growth", 0.02)),
         months=int(a.get("months", 18)),
     )
 
 
-# Generated artifacts (images, decks) and the static frontend.
+@app.post("/api/roleplay")
+def api_roleplay(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
+    msg = (payload.get("message") or "").strip()
+    if not msg:
+        raise HTTPException(400, "Provide a 'message'.")
+    return {"reply": buyer_reply(pitch, payload.get("history") or [], msg)}
+
+
+@app.post("/api/roleplay/feedback")
+def api_roleplay_feedback(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
+    return coach_feedback(pitch, payload.get("history") or [])
+
+
+@app.post("/api/roleplay/suggest")
+def api_roleplay_suggest(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
+    return suggest_pitch(pitch, payload.get("history") or [])
+
+
+# Generated artifacts (images, videos, decks) and the static frontend.
 app.mount("/generated", StaticFiles(directory=GEN_DIR), name="generated")
 app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")

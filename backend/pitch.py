@@ -3,7 +3,7 @@
 import json
 
 from products import catalogue_text
-from agnes import chat_json, generate_image
+from agnes import chat_json, generate_image, generate_video
 
 
 SYSTEM_PROMPT = """You are a senior sales-enablement strategist at AnyMind Group,
@@ -72,28 +72,43 @@ def build_pitch(brand: str, brand_context: dict | None = None) -> dict:
 
 
 def build_image_prompt(pitch: dict) -> str:
-    """Derive a concept-visualisation prompt from the pitch.
-
-    Follows Agnes' recommended structure:
-    [Subject] + [Scene] + [Style] + [Lighting] + [Composition] + [Quality].
-    """
+    """Prompt to ENHANCE an uploaded product photo into premium marketing creative.
+    Used with image-to-image, so it preserves the product while elevating it."""
     brand = pitch.get("brand", "the brand")
-    pkg = pitch.get("recommended_package", {})
-    package_name = pkg.get("package_name", "growth solution package")
-    products = ", ".join(pkg.get("included_products", [])) or "AnyMind products"
     return (
-        f"A sleek isometric business concept illustration representing the brand "
-        f"'{brand}' accelerating growth through a unified commerce platform "
-        f"(the '{package_name}', powering {products}); "
-        f"scene of connected dashboards, product and influencer icons flowing "
-        f"into a central hub with upward-trending growth arrows; "
-        f"modern corporate infographic style, deep teal and navy palette with "
-        f"mint accents; soft clean studio lighting; balanced wide composition "
-        f"with a clear focal hub; high detail, high visual density, minimal "
-        f"text, professional and optimistic."
+        f"Enhance this product photo into a premium marketing visual for '{brand}'. "
+        f"Keep the product's exact identity, shape, label and colours, but elevate "
+        f"everything around it: clean professional studio lighting, crisp sharp focus, "
+        f"refined complementary background, subtle reflections and soft shadows, "
+        f"vibrant true-to-life colours, advertising-grade product photography with "
+        f"room for a short headline. Scroll-stopping e-commerce hero image."
     )
 
 
-def generate_concept_image(pitch: dict) -> bytes:
-    """Build the prompt from the pitch and return PNG bytes."""
-    return generate_image(build_image_prompt(pitch))
+def generate_concept_image(pitch: dict, init_image: str | None = None):
+    """Return (png_bytes, public_url). Pass the uploaded product image as
+    init_image (URL or Data URI) for image-to-image enhancement."""
+    prompt = build_image_prompt(pitch)
+    if init_image:
+        prompt = "Using the supplied product image as the subject. " + prompt
+    return generate_image(prompt, init_image=init_image)
+
+
+def build_video_prompt(pitch: dict) -> str:
+    """Prompt for an informative, engaging short product video (image-to-video)."""
+    brand = pitch.get("brand", "the brand")
+    return (
+        f"An engaging, informative short product video for '{brand}', built from "
+        f"the supplied image. Smoothly reveal the product with gentle cinematic "
+        f"motion — a slow push-in, subtle rotation and light parallax — to highlight "
+        f"its form, texture and key details. Clean premium studio setting, soft "
+        f"dynamic lighting, polished e-commerce feel. Keep the product's identity, "
+        f"packaging and colours perfectly consistent throughout."
+    )
+
+
+def generate_concept_video(pitch: dict, init_image: str | None = None) -> bytes:
+    """Return MP4 bytes of a vertical product video (9:16). init_image should be
+    a PUBLIC image URL (e.g. the enhanced image's URL)."""
+    return generate_video(build_video_prompt(pitch), init_image=init_image,
+                          width=768, height=1152)

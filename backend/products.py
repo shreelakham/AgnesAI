@@ -1,8 +1,4 @@
-"""AnyMind product catalogue — the fixed 'what we can sell' reference.
-
-Keep this in sync with the real product suite. The analyzer is only allowed to
-recommend products from this list, which keeps the pitch grounded.
-"""
+"""AnyMind product catalogue + customer-impact assumptions."""
 
 ANYMIND_PRODUCTS = {
     "AnyTag": "Influencer marketing platform: discover, activate, manage, "
@@ -31,28 +27,26 @@ def catalogue_text() -> str:
 
 
 # ---------------------------------------------------------------------------
-# PRICING MODEL (assumptions — edit to match real commercials).
-# Each product earns AnyMind two ways:
-#   monthly_base : fixed SaaS / service fee per month (USD)
-#   take_rate    : % of the brand's attributable monthly GMV it earns on top
-# These drive the revenue dashboard. They are explicit and configurable so the
-# projections stay transparent and defensible.
+# CUSTOMER IMPACT MODEL (assumptions — edit to match real benchmarks).
+# For the CUSTOMER-facing forecast: how much each product can lift the brand's
+# own revenue growth once adopted. `growth_boost` is the incremental monthly
+# revenue growth rate the product drives at full adoption; `lever` names the
+# mechanism for the pitch narrative. Deterministic + transparent on purpose.
 # ---------------------------------------------------------------------------
-PRODUCT_PRICING = {
-    "AnyTag":     {"monthly_base": 2500, "take_rate": 0.000},
-    "AnyCreator": {"monthly_base": 1500, "take_rate": 0.000},
-    "AnyDigital": {"monthly_base": 2000, "take_rate": 0.030},
-    "AnyManager": {"monthly_base": 1000, "take_rate": 0.150},
-    "AnyX":       {"monthly_base": 3000, "take_rate": 0.020},
-    "AnyShop":    {"monthly_base": 1500, "take_rate": 0.015},
-    "AnyLogi":    {"monthly_base": 2000, "take_rate": 0.040},
-    "AnyChat":    {"monthly_base": 1200, "take_rate": 0.010},
-    "AnyFactory": {"monthly_base": 2500, "take_rate": 0.050},
+PRODUCT_IMPACT = {
+    "AnyTag":     {"growth_boost": 0.010, "lever": "influencer-driven demand"},
+    "AnyCreator": {"growth_boost": 0.006, "lever": "creator content & reach"},
+    "AnyDigital": {"growth_boost": 0.012, "lever": "scaled paid acquisition"},
+    "AnyManager": {"growth_boost": 0.004, "lever": "media monetisation"},
+    "AnyX":       {"growth_boost": 0.009, "lever": "marketplace conversion"},
+    "AnyShop":    {"growth_boost": 0.007, "lever": "D2C storefront sales"},
+    "AnyLogi":    {"growth_boost": 0.005, "lever": "recovered stockout sales"},
+    "AnyChat":    {"growth_boost": 0.006, "lever": "chat-commerce conversion"},
+    "AnyFactory": {"growth_boost": 0.008, "lever": "new product margin"},
 }
 
-# Fallback used if the model recommends a product not in the table.
-DEFAULT_PRICING = {"monthly_base": 2000, "take_rate": 0.02}
+DEFAULT_IMPACT = {"growth_boost": 0.006, "lever": "commerce enablement"}
 
 
-def pricing_for(product: str) -> dict:
-    return PRODUCT_PRICING.get(product, DEFAULT_PRICING)
+def impact_for(product: str) -> dict:
+    return PRODUCT_IMPACT.get(product, DEFAULT_IMPACT)
