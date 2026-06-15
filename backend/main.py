@@ -20,7 +20,8 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from leads import generate_leads
-from pitch import (build_pitch, generate_concept_image, generate_concept_video)
+from pitch import (build_pitch, generate_concept_image, generate_concept_video,
+                   generate_market_image, generate_market_headline, MARKET_STYLES)
 from deck import build_deck
 from revenue import build_dashboard
 from roleplay import buyer_reply, coach_feedback, suggest_pitch
@@ -84,6 +85,38 @@ def api_video(payload: dict = Body(...)):
     with open(os.path.join(GEN_DIR, name), "wb") as f:
         f.write(mp4)
     return {"video_url": f"/generated/{name}", "video_file": name}
+
+
+@app.get("/api/markets")
+def api_markets_list():
+    return {"markets": list(MARKET_STYLES.keys())}
+
+
+@app.post("/api/market")
+def api_market(payload: dict = Body(...)):
+    pitch = _need_pitch(payload)
+    market = (payload.get("market") or "").strip()
+    init = payload.get("init_image")
+    if not market:
+        raise HTTPException(400, "Provide a 'market'.")
+    if not init:
+        raise HTTPException(400, "Provide 'init_image' (product photo).")
+    try:
+        png, remote = generate_market_image(pitch, market, init)
+    except Exception as e:
+        raise HTTPException(502, f"Market creative failed: {e}")
+    headline, gloss = "", ""
+    try:
+        h = generate_market_headline(pitch, market)
+        headline, gloss = h.get("headline", ""), h.get("english_gloss", "")
+    except Exception:
+        pass  # tile still works without copy
+    name = f"mkt_{uuid.uuid4().hex[:10]}.png"
+    with open(os.path.join(GEN_DIR, name), "wb") as f:
+        f.write(png)
+    return {"market": market, "image_url": f"/generated/{name}",
+            "image_remote_url": remote, "headline": headline,
+            "english_gloss": gloss}
 
 
 @app.post("/api/deck")

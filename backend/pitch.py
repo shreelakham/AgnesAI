@@ -112,3 +112,68 @@ def generate_concept_video(pitch: dict, init_image: str | None = None) -> bytes:
     a PUBLIC image URL (e.g. the enhanced image's URL)."""
     return generate_video(build_video_prompt(pitch), init_image=init_image,
                           width=768, height=1152)
+
+
+# ---------------------------------------------------------------------------
+# GLOBAL MARKET LOCALIZATION (image-to-image per consumer market).
+# Aesthetic/styling cues only — framed as design language, not stereotypes.
+# ---------------------------------------------------------------------------
+MARKET_STYLES = {
+    "Japan": "refined Japanese minimalism — clean uncluttered composition, soft "
+             "muted palette, precise styling, calm modern Tokyo sensibility",
+    "South Korea": "glossy K-beauty aesthetic — bright airy lighting, dewy "
+                   "luminous tones, sleek modern Seoul styling",
+    "Indonesia": "warm vibrant Southeast-Asian energy — sunlit tropical tones, "
+                 "lively community warmth, modern Jakarta lifestyle",
+    "Middle East": "opulent Gulf luxury — rich elegant palette, gold and deep ",
+    "United States": "bold confident American advertising — high-energy "
+                     "lifestyle, punchy colours, direct big presentation",
+    "Brazil": "festive Latin-American vibrancy — sun-drenched colours, joyful "
+              "energy, dynamic outdoor lifestyle",
+}
+
+
+def build_market_prompt(pitch: dict, market: str, style: str) -> str:
+    brand = pitch.get("brand", "the brand")
+    return (
+        f"A localized marketing campaign creative of this product for the "
+        f"{market} market, for brand '{brand}'. Re-style the scene and mood with "
+        f"{style}. Keep the product's exact identity, packaging, shape and "
+        f"colours intact. Advertising-grade product photography, premium, "
+        f"scroll-stopping, with room for a short headline."
+    )
+
+
+def generate_market_image(pitch: dict, market: str, init_image: str):
+    """Return (png_bytes, public_url) — the product localized for one market."""
+    style = MARKET_STYLES.get(market, "modern premium global advertising")
+    return generate_image(build_market_prompt(pitch, market, style),
+                          init_image=init_image)
+
+
+# Localized headline copy per market (real text, written by the text model —
+# rendered as HTML on the tile, NOT baked into the image).
+MARKET_LANG = {
+    "Japan": "Japanese",
+    "South Korea": "Korean",
+    "Indonesia": "Indonesian (Bahasa Indonesia)",
+    "Middle East": "Arabic",
+    "United States": "English",
+    "Brazil": "Brazilian Portuguese",
+}
+
+HEADLINE_SYSTEM = """You are a brand copywriter. Write ONE short, punchy marketing
+headline (max ~8 words) for the product, localized for the target market and
+written in that market's primary language. Natural and idiomatic, not a literal
+translation. Return ONLY valid JSON — no prose, no code fences."""
+
+
+def generate_market_headline(pitch: dict, market: str) -> dict:
+    """Return {headline (localized), english_gloss}."""
+    brand = pitch.get("brand", "the brand")
+    lang = MARKET_LANG.get(market, "English")
+    user = (f'Brand: {brand}. Product category implied by the brand. '
+            f'Target market: {market}. Write the headline in {lang}.\n'
+            f'Return JSON: {{"headline": string (in {lang}), '
+            f'"english_gloss": string (its meaning in English)}}')
+    return chat_json(HEADLINE_SYSTEM, user, temperature=0.7)
