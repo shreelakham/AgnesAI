@@ -1,0 +1,66 @@
+{
+  "brand": "Acme Beauty Co.",
+  "brand_summary": "Acme Beauty Co. is a high-growth D2C cosmetics brand generating USD 8-12M annually, operating across Singapore, Malaysia, and Indonesia with a lean team of ~40 staff.",
+  "competitive_position": "Strong regional foothold in key APAC markets with a multi-channel presence (Own Web, Shopee, Instagram), but constrained by operational fragmentation that limits scalability and data-driven decision-making.",
+  "likely_competitors": [
+    "Local indie beauty brands",
+    "Global D2C giants (e.g., The Body Shop, Sephora brands)",
+    "Regional incumbents (e.g., Wardah, Make Over)"
+  ],
+  "video": {
+    "src": "assets/marketing.mp4",
+    "caption": "A 15-second sample marketing clip for the recommended repositioning."
+  },
+  "gaps": [
+    {
+      "gap": "Fragmented marketplace operations across Shopee and D2C",
+      "why_it_matters": "Manual management leads to stockouts, pricing errors, and inefficient resource allocation, capping growth potential beyond current USD 12M revenue.",
+      "severity": "high",
+      "image": "assets\\gap-1.jpg"
+    },
+    {
+      "gap": "Low influencer ROI tracking and attribution",
+      "why_it_matters": "Inability to measure campaign effectiveness prevents optimization of marketing spend, leading to wasted budget and missed conversion opportunities in the social-commerce driven APAC market.",
+      "severity": "high",
+      "image": "assets\\gap-2.jpg"
+    }
+  ],
+  "solution_mapping": [
+    {
+      "product": "AnyX",
+      "gap_addressed": "Fragmented marketplace operations across Shopee and D2C",
+      "how_it_helps": "Centralizes inventory, orders, and product data across Shopee, own website, and other marketplaces into a single dashboard, eliminating manual entry and reducing operational overhead.",
+      "image": "assets\\solution-1.jpg"
+    },
+    {
+      "product": "AnyTag",
+      "gap_addressed": "Low influencer ROI tracking and attribution",
+      "how_it_helps": "Provides end-to-end influencer campaign management with precise attribution tracking across APAC, allowing Acme to identify top-performing creators and optimize spend based on actual sales data.",
+      "image": "assets\\solution-2.jpg"
+    }
+  ],
+  "recommended_package": {
+    "package_name": "Acme Growth Accelerator Bundle",
+    "included_products": [
+      "AnyX",
+      "AnyTag"
+    ],
+    "rationale": "This bundle directly addresses Acme's two critical bottlenecks: operational efficiency and marketing performance. AnyX stabilizes the foundation by unifying commerce operations, while AnyTag unlocks scalable growth by proving and optimizing influencer ROI.",
+    "suggested_engagement": "Immediate implementation of AnyX for Shopee/D2C sync followed by a pilot influencer campaign tracked via AnyTag within 60 days."
+  },
+  "projected_impact": {
+    "revenue_or_profit_uplift": {
+      "low": "15%",
+      "high": "25%",
+      "timeframe": "12 months",
+      "basis": "Optimized marketing spend efficiency via AnyTag attribution and reduced operational churn/costs via AnyX centralization."
+    },
+    "time_or_efficiency_gain": {
+      "low": "20 hours/week",
+      "high": "35 hours/week",
+      "what_it_speeds_up": "Order processing, inventory reconciliation, and influencer reporting automation."
+    },
+    "time_to_value": "90 days"
+  },
+  "headline_pitch": "Unify your APAC commerce operations and prove influencer ROI to scale from USD 12M to USD 15M+ in under a year."
+}
