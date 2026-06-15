@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnyMind · Agnes Pitch Builder</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <div class="brand-name">Pitch Builder</div>
+        <div class="brand-sub">powered by Agnes AI</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-tab="leads"><span>1</span> Leads</button>
+      <button class="nav-item" data-tab="research"><span>2</span> Research</button>
+      <button class="nav-item" data-tab="deck"><span>3</span> Pitch Deck</button>
+      <button class="nav-item" data-tab="dashboard"><span>4</span> Revenue</button>
+    </nav>
+    <div class="pipeline-state" id="pipelineState">
+      <div class="ps-row"><span class="dot" id="dot-brand"></span> No brand selected</div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- LEADS -->
+    <section class="tab active" id="tab-leads">
+      <h1>Find leads</h1>
+      <p class="lede">Describe the kind of company AnyMind wants to win. Agnes finds candidate brands and scores their fit.</p>
+      <div class="panel">
+        <label>Ideal Customer Profile</label>
+        <textarea id="icp" rows="3" placeholder="e.g. Fast-growing D2C beauty &amp; skincare brands in Southeast Asia selling on Shopee and their own sites, USD 5–20M revenue, lean teams.">Fast-growing D2C beauty & skincare brands in Southeast Asia selling on Shopee and their own sites, USD 5–20M revenue, lean teams.</textarea>
+        <button class="btn primary" id="findLeads">Find leads</button>
+      </div>
+      <div id="leadsResult" class="grid"></div>
+    </section>
+
+    <!-- RESEARCH -->
+    <section class="tab" id="tab-research">
+      <h1>Competitive research</h1>
+      <p class="lede">Agnes analyses the brand, finds gaps, and maps AnyMind products onto them.</p>
+      <div class="panel row">
+        <input id="brandInput" type="text" placeholder="Brand name, e.g. Acme Beauty Co." />
+        <button class="btn primary" id="runResearch">Run analysis</button>
+      </div>
+      <div id="researchResult"></div>
+    </section>
+
+    <!-- DECK -->
+    <section class="tab" id="tab-deck">
+      <h1>Pitch deck</h1>
+      <p class="lede">Generate a concept visual with Agnes, then export a ready-to-present deck.</p>
+      <div id="deckEmpty" class="empty">Run research on a brand first.</div>
+      <div id="deckArea" class="hidden">
+        <div class="deck-actions">
+          <button class="btn" id="genImage">Generate concept image</button>
+          <button class="btn primary" id="buildDeck">Build &amp; download deck</button>
+        </div>
+        <div class="image-wrap" id="imageWrap"></div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="tab" id="tab-dashboard">
+      <h1>Revenue dashboard</h1>
+      <p class="lede">How much will this deal generate for AnyMind under different go-to-market strategies?</p>
+      <div id="dashEmpty" class="empty">Run research on a brand first.</div>
+      <div id="dashArea" class="hidden">
+        <div class="panel assumptions">
+          <div class="field"><label>Start attributable GMV / mo (USD)</label><input id="startGmv" type="number" value="500000" /></div>
+          <div class="field"><label>Brand monthly growth</label><input id="growth" type="number" step="0.01" value="0.04" /></div>
+          <div class="field"><label>Horizon (months)</label><input id="months" type="number" value="18" /></div>
+          <button class="btn primary" id="runDash">Project</button>
+        </div>
+        <div id="dashCards" class="grid three"></div>
+        <div class="charts">
+          <div class="chart-card"><h3>AnyMind revenue / month</h3><canvas id="lineChart"></canvas></div>
+          <div class="chart-card"><h3>Total revenue over horizon</h3><canvas id="barChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
