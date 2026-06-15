@@ -61,8 +61,8 @@ $("#runResearch").onclick=async(e)=>{
     const p=await api("/api/research",{brand});
     state.pitch=p;state.brand=p.brand||brand;
     state.imageFile=null;state.enhancedUrl=null;state.uploaded=null;state.history=[];
-    ["#imageWrap","#videoWrap","#chat","#coachPanel","#suggestPanel","#assetPreview"].forEach(id=>$(id).innerHTML="");
-    $("#genImage").disabled=true;$("#genVideo").disabled=true;$("#dropText").textContent="Click to choose a product photo (JPG / PNG)";
+    ["#imageWrap","#videoWrap","#chat","#coachPanel","#suggestPanel","#assetPreview","#marketGrid"].forEach(id=>$(id).innerHTML="");
+    $("#genImage").disabled=true;$("#genVideo").disabled=true;$("#genMarkets").disabled=true;$("#dropText").textContent="Click to choose a product photo (JPG / PNG)";
     renderResearch(p);syncState();
     toast("Analysis ready. Practice the pitch or open Studio from the sidebar.");
   }catch(err){toast(err.message);}
@@ -147,6 +147,7 @@ $("#assetInput").onchange=(e)=>{
     $("#assetPreview").innerHTML=`<img src="${r.result}" alt="product"/>`;
     $("#dropText").textContent=f.name;
     $("#genImage").disabled=false;$("#genVideo").disabled=true;$("#videoWrap").innerHTML="";
+    $("#genMarkets").disabled=false;
   };
   r.readAsDataURL(f);
 };
@@ -175,6 +176,29 @@ $("#genVideo").onclick=async(e)=>{
   busy(e.target,false);
 };
 
+const MARKETS=["Japan","South Korea","Indonesia","Middle East","United States","Brazil"];
+$("#genMarkets").onclick=async(e)=>{
+  const src=state.enhancedUrl||state.uploaded;
+  if(!src)return toast("Upload a product image first.");
+  busy(e.target,true,"Localizing…");
+  const grid=$("#marketGrid");grid.innerHTML="";
+  for(const m of MARKETS){
+    const tile=el("div","mkt",`<div class="mkt-cap">${m}</div><div class="mkt-img"><span class="spinner dark"></span></div>`);
+    grid.appendChild(tile);
+    try{
+      const r=await api("/api/market",{pitch:state.pitch,market:m,init_image:src});
+      tile.querySelector(".mkt-img").innerHTML=`<img src="${r.image_url}" alt="${m}"/>`;
+      if(r.headline){
+        const rtl=(m==="Middle East")?' dir="rtl"':'';
+        tile.insertAdjacentHTML("beforeend",
+          `<div class="mkt-copy"><div class="mkt-head"${rtl}>${esc(r.headline)}</div>`+
+          (r.english_gloss?`<div class="mkt-gloss">${esc(r.english_gloss)}</div>`:"")+`</div>`);
+      }
+    }catch(err){tile.querySelector(".mkt-img").innerHTML=`<div class="mkt-err">render failed</div>`;}
+  }
+  busy(e.target,false);
+};
+
 $("#buildDeck").onclick=async(e)=>{
   if(!state.pitch)return;busy(e.target,true,"Building deck…");
   try{
@@ -196,11 +220,6 @@ $("#runForecast").onclick=async(e)=>{
 };
 
 function renderForecast(d){
-    const fmtAxis=v=>{
-  if(Math.abs(v)>=1e6) return "$"+(v/1e6).toFixed(1)+"M";
-  if(Math.abs(v)>=1e3) return "$"+Math.round(v/1e3)+"k";
-  return "$"+Math.round(v);
-};
   const best=d.strategies.find(s=>s.strategy===d.recommended);
   $("#fcHeadline").innerHTML=`With the <b>${esc(best.label)}</b> path, ${esc(d.brand)} could unlock
     <b>${money(best.uplift_vs_baseline)}</b> in extra revenue over ${d.assumptions.horizon_months} months — a ${best.uplift_pct}% lift vs. doing nothing.`;
@@ -219,12 +238,12 @@ function renderForecast(d){
     ...d.strategies.map(s=>({label:s.label,data:s.monthly_revenue,borderColor:C[s.label]||"#0B8C9B",backgroundColor:"transparent",tension:.3,pointRadius:0,borderWidth:2}))];
   if(state.lineChart)state.lineChart.destroy();
   state.lineChart=new Chart($("#lineChart"),{type:"line",data:{labels,datasets:ds},
-    options:{responsive:true,plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:fmtAxis}}}}});
+    options:{responsive:true,plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:v=>"$"+(v/1e6).toFixed(1)+"M"}}}}});
   if(state.barChart)state.barChart.destroy();
   state.barChart=new Chart($("#barChart"),{type:"bar",
     data:{labels:d.strategies.map(s=>s.label),datasets:[{data:d.strategies.map(s=>s.uplift_vs_baseline),
       backgroundColor:d.strategies.map(s=>C[s.label]||"#0B8C9B")}]},
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtAxis}}}}});
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>"$"+(v/1e6).toFixed(1)+"M"}}}}});
 }
 
 syncState();
